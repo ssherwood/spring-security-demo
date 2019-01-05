@@ -25,7 +25,7 @@ public class PatientAuthz {
      * @return
      */
     @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
-    public boolean isSelf(Authentication authentication, Long patientId, Optional<Patient> patientToView) {
+    public boolean isAllowed(Authentication authentication, Long patientId, Optional<Patient> patientToView) {
         if (authentication == null || StringUtils.isBlank(authentication.getName())) {
             logger.warn("Authz FAILED: invalid User '{}'.", authentication);
             return false;
@@ -35,9 +35,12 @@ public class PatientAuthz {
         } else if (!Objects.equals(patientId, patientToView.get().getId())) {
             logger.warn("Authz FAILED: User '{}' requested Patient '{}' does not match requested Id '{}'.", authentication, patientToView.get().getId(), patientId);
             return false;
+        } else if (isAdmin(authentication) || isDoctor(authentication)) {
+            logger.info("Authz SUCCEEDED: allowing super user '{}' to access Patient '{}'", authentication, patientId);
+            return true;
         }
         else if (Objects.equals(authentication.getName(), patientToView.get().getUsername())) {
-            // ^^^ ideally we would use a unchangeable guid on the identity to test against
+            // ^^^ ideally we would use a unchangeable guid on the identity to test
             logger.info("Authz SUCCEEDED: allowing User '{}' access to Patient '{}'.", authentication, patientId);
             return true;
         }
@@ -45,6 +48,19 @@ public class PatientAuthz {
             logger.warn("Authz FAILED: User '{}' not allowed to access Patient '{}'.", authentication, patientId);
             return false;
         }
+    }
+
+    private boolean isAdmin(Authentication authentication) {
+        return authentication.getAuthorities().stream()
+                .anyMatch(a -> "ROLE_ADMIN".equals(a.getAuthority()));
+    }
+
+
+    // this should be more sophisticated... are you a doctor that sees this
+    // patient or are in the same practice?  etc?
+    private boolean isDoctor(Authentication authentication) {
+        return authentication.getAuthorities().stream()
+                .anyMatch(a -> "ROLE_DOCTOR".equals(a.getAuthority()));
     }
 
     // other use cases?

@@ -1,0 +1,9 @@
+---
+applications:
+  - name: clinic
+    memory: 1G
+    instances: 1
+    path: target/clinic-0.0.1-SNAPSHOT.jar
+    env:
+      SKIP_SSL_VALIDATION: "true"
+      GRANT_TYPE: authorization_code
