@@ -4,6 +4,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.oauth2.provider.OAuth2Authentication;
+import org.springframework.security.oauth2.provider.OAuth2Request;
 import org.springframework.stereotype.Component;
 
 import java.util.Objects;
@@ -14,7 +16,6 @@ public class PatientAuthz {
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
     /**
-     *
      * FYI - it is generally considered a bad practice to accept an Optional as
      * input, however this case works better for the Service API since this
      * method will be used by a SPEL expression wrapping an Optional return
@@ -38,13 +39,11 @@ public class PatientAuthz {
         } else if (isAdmin(authentication) || isDoctor(authentication)) {
             logger.info("Authz SUCCEEDED: allowing super user '{}' to access Patient '{}'", authentication, patientId);
             return true;
-        }
-        else if (Objects.equals(authentication.getName(), patientToView.get().getUsername())) {
+        } else if (Objects.equals(authentication.getName(), patientToView.get().getUsername())) {
             // ^^^ ideally we would use a unchangeable guid on the identity to test
             logger.info("Authz SUCCEEDED: allowing User '{}' access to Patient '{}'.", authentication, patientId);
             return true;
-        }
-        else {
+        } else {
             logger.warn("Authz FAILED: User '{}' not allowed to access Patient '{}'.", authentication, patientId);
             return false;
         }
@@ -59,7 +58,24 @@ public class PatientAuthz {
     // this should be more sophisticated... are you a doctor that sees this
     // patient or are in the same practice?  etc?
     private boolean isDoctor(Authentication authentication) {
+
+        if (authentication instanceof OAuth2Authentication) {
+            OAuth2Request clientAuthentication = ((OAuth2Authentication) authentication).getOAuth2Request();
+            System.out.println("checking authorization for " + clientAuthentication + ":");
+
+            // TODO rationalize difference between scopes and authorities
+            System.out.println("# of authorities is " + clientAuthentication.getAuthorities().size());
+            System.out.println("# of scopes is " + clientAuthentication.getScope().size());
+
+            return clientAuthentication.getScope().stream()
+                    .peek(System.out::println)
+                    .anyMatch("ROLE_DOCTOR"::equals);
+        }
+
+        // else
+
         return authentication.getAuthorities().stream()
+                .peek(System.out::println)
                 .anyMatch(a -> "ROLE_DOCTOR".equals(a.getAuthority()));
     }
 

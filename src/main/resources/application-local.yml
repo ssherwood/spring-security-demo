@@ -1,0 +1,19 @@
+spring:
+  cloud:
+    appId: clinic
+
+ssoServiceUrl: https://sandbox.login.sys.pcf.pcfplatform.space
+
+security:
+  oauth2:
+    client:
+      clientId: f5960310-38d2-409a-9fb1-25657d64e675
+      clientSecret: 8a870999-18d5-4c63-9216-9f5f1ce75377
+      accessTokenUri: ${ssoServiceUrl}/oauth/token
+      userAuthorizationUri: ${ssoServiceUrl}/oauth/authorize
+    resource:
+      tokenInfoUri: ${ssoServiceUrl}/check_token
+      userInfoUri: ${ssoServiceUrl}/userinfo
+      jwk:
+        key-set-uri: ${ssoServiceUrl}/token_keys
+

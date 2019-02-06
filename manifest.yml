@@ -1,9 +1,13 @@
 ---
 applications:
   - name: clinic
+    buildpacks:
+      - java_buildpack_offline
     memory: 1G
     instances: 1
     path: target/clinic-0.0.1-SNAPSHOT.jar
     env:
       SKIP_SSL_VALIDATION: "true"
       GRANT_TYPE: authorization_code
+      SSO_IDENTITY_PROVIDERS: uaa
+      RESOURCE_URL: https://sandbox.login.sys.pcf.pcfplatform.space
